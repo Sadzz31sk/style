@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Styles Spectrum</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="flex flex-col w-full h-screen bg-white overflow-scroll">
+    <header class="flex justify-center h-[80px] items-center w-full">
+        <h1 class="text-3xl font-bold">Styles <span class="text-purple-600">Spectrum</span></h1>
+    </header>
+    
+    <div class="w-[90vw] m-auto h-[90%] flex gap-4">
+        <!-- Left side: Large gray preview box -->
+        <div class="w-[70%] h-full bg-gray-300"></div>
+        
+        <!-- Right side: Model selection & Upload section -->
+        <div class="w-[30%] flex flex-col gap-4">
+            <!-- Select Model -->
+            <div class="w-full bg-gray-200 p-4 rounded-md flex flex-col items-center">
+                <label class="text-sm font-semibold">Select Model</label>
+                <select class="mt-2 p-2 border rounded">
+                    <option>Male</option>
+                    <option>Female</option>
+                </select>
+                <div class="w-[80%] h-[150px] bg-gray-400 mt-4 rounded"></div>
+            </div>
+            
+            <!-- Upload Design -->
+            <div class="w-full bg-white border-2 border-dashed border-gray-400 p-6 text-center rounded-md">
+                <p class="text-sm font-semibold">Upload Design</p>
+                <div class="mt-4 p-4 border border-gray-300 rounded cursor-pointer">
+                    <p class="text-gray-600">Drag & Drop your design</p>
+                    <p class="text-blue-600 cursor-pointer">or Browse</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
