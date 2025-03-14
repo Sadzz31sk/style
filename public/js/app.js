@@ -1,46 +1,83 @@
 const modelSelect = document.getElementById("modelSelect");
 const modelPreview = document.getElementById("modelPreview");
+const fileInput = document.getElementById("fileUpload");
+const descriptionInput = document.getElementById("garmentDescription");
+const apiImage = document.getElementById("apiImage");
+const placeholderText = document.getElementById("placeholderText");
+
 
 modelSelect.addEventListener("change", function () {
     modelPreview.src = "assets/images/" + this.value;
 });
 
+// Preview
 function previewUpload() {
-    const file = document.getElementById('fileUpload').files[0];
-    const preview = document.getElementById('uploadPreview');
+    const file = fileInput.files[0];
+    const preview = document.getElementById("uploadPreview");
 
     if (file) {
         const reader = new FileReader();
         reader.onload = function (e) {
             preview.src = e.target.result;
-            preview.classList.remove('hidden');
+            preview.classList.remove("hidden");
         };
         reader.readAsDataURL(file);
     }
 }
 
-document.getElementById("callApiButton").addEventListener("click", async function () {
-    const fileInput = document.getElementById("fileUpload");
-    const file = fileInput.files[0];
-    const apiImage = document.getElementById("apiImage");
+// Convert to Base64
+async function getModelImageBase64(imagePath) {
+    try {
+        const response = await fetch(imagePath);
+        const blob = await response.blob();
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result.split(",")[1]); // Extract base64
+            reader.readAsDataURL(blob);
+        });
+    } catch (error) {
+        console.error("Error loading model image:", error);
+        return null;
+    }
+}
 
-    apiImage.src = "";
-    apiImage.alt = "Processing...";
-    apiImage.style.display = "block";
-    apiImage.style.color = "#666";
-    apiImage.style.fontSize = "16px";
-    apiImage.style.textAlign = "center";
-    apiImage.style.padding = "20px";
+
+async function processImage() {
+    const file = fileInput.files[0];
+    const description = descriptionInput.value.trim();
+    const selectedModel = modelSelect.value;
 
     if (!file) {
         alert("Please select an image to upload.");
         return;
     }
 
-    const reader = new FileReader();
+    if (!description) {
+        alert("Please enter a garment description.");
+        return;
+    }
 
+    if (!selectedModel) {
+        alert("Please select a model image.");
+        return;
+    }
+
+    // loading state
+    apiImage.src = "";
+    apiImage.style.display = "none";
+    placeholderText.style.display = "block";
+    placeholderText.textContent = "Processing...";
+
+
+    const reader = new FileReader();
     reader.onloadend = async function () {
-        const base64Image = reader.result.replace(/^data:image\/[a-z]+;base64,/, ''); // Remove prefix
+        const base64GarmentImage = reader.result.split(",")[1]; // Extract base64 data
+        const base64ModelImage = await getModelImageBase64("assets/images/" + selectedModel);
+
+        if (!base64ModelImage) {
+            alert("Error loading model image.");
+            return;
+        }
 
         try {
             const response = await fetch("http://localhost:3000/process-image", {
@@ -48,7 +85,17 @@ document.getElementById("callApiButton").addEventListener("click", async functio
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ image_base64: base64Image }),
+                body: JSON.stringify({
+                    image_base64: base64GarmentImage,
+                    description: description,
+                    model_image: base64ModelImage,
+                    layers: null,
+                    composite: null,
+                    is_checked: false,
+                    is_checked_crop: false,
+                    denoise_steps: 10,
+                    seed: 42,
+                }),
             });
 
             if (!response.ok) {
@@ -60,19 +107,18 @@ document.getElementById("callApiButton").addEventListener("click", async functio
 
             if (processedBase64Image) {
                 apiImage.src = "data:image/jpeg;base64," + processedBase64Image;
-                apiImage.alt = "Generated Design";
-                apiImage.style.color = "";
-                apiImage.style.fontSize = "";
-                apiImage.style.textAlign = "";
-                apiImage.style.padding = "";
+                apiImage.style.display = "block";
+                placeholderText.style.display = "none";
             } else {
-                apiImage.alt = "Error processing image.";
+                placeholderText.textContent = "Error processing image.";
             }
         } catch (error) {
             console.error("Error:", error);
-            apiImage.alt = "Error fetching design. Please check your connection.";
+            placeholderText.textContent = "Error fetching design. Please try again.";
         }
     };
 
     reader.readAsDataURL(file);
-});
+}
+
+document.getElementById("callApiButton").addEventListener("click", processImage);
